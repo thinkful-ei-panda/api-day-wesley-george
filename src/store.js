@@ -2,6 +2,7 @@
 
 const items = [];
 let hideCheckeditems = false;
+let error=null;
 
 const findById = function (id) {
   return this.items.find(currentItem => currentItem.id === id);
@@ -39,6 +40,10 @@ let findAndUpdate = function(id, newData) {
   return this.items.find(obj => obj.id === id);
 };
 
+const setError= function(error){
+  this.error=error;
+};
+
 export default {
   items,
   hideCheckeditems,
@@ -48,5 +53,7 @@ export default {
   // findAndUpdateName,
   findAndDelete,
   toggleCheckedFilter,
-  findAndUpdate
+  findAndUpdate,
+  error,
+  setError
 };

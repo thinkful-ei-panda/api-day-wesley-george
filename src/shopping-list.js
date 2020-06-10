@@ -9,7 +9,7 @@ const generateItemElement = function (item) {
   if (!item.checked) {
     itemTitle = `
       <form class="js-edit-item">
-        <input class="shopping-item" type="text" value="${item.name}" />
+        <input required class="shopping-item" type="text" value="${item.name}" />
       </form>
     `;
   }
@@ -34,6 +34,7 @@ const generateShoppingItemsString = function (shoppingList) {
 };
 
 const render = function () {
+  renderError();
   // Filter item list if store prop is true by item.checked === false
   let items = [...store.items];
   if (store.hideCheckedItems) {
@@ -44,7 +45,9 @@ const render = function () {
   const shoppingListItemsString = generateShoppingItemsString(items);
 
   // insert that HTML into the DOM
+
   $('.js-shopping-list').html(shoppingListItemsString);
+  
 };
 
 const handleNewItemSubmit = function () {
@@ -53,9 +56,13 @@ const handleNewItemSubmit = function () {
     const newItemName = $('.js-shopping-list-entry').val();
     $('.js-shopping-list-entry').val('');
     api.createItem(newItemName)
-      .then(response => response.json())
-      .then(items => {store.addItem(items);
-        render();
+      .then((data) => {
+        store.addItem(data);
+        render();        
+      })
+      .catch(error=>{
+        store.setError(error);
+        renderError();
       });
   });
 };
@@ -72,9 +79,15 @@ const handleDeleteItemClicked = function () {
     // get the index of the item in store.items
     const id = getItemIdFromElement(event.currentTarget);
     // delete the item
-    store.findAndDelete(id);
-    // render the updated shopping list
-    render();
+    api.deleteItem(id)
+      .then(()=>{
+        store.findAndDelete(id);
+        render();
+      })
+      .catch(error=>{
+        store.setError(error);
+        renderError();
+      });
   });
 };
 
@@ -89,6 +102,10 @@ const handleEditShoppingItemSubmit = function () {
       .then(() => {
         store.findAndUpdate(id, updateData);
         render();
+      })
+      .catch(error=>{
+        store.setError(error);
+        renderError();
       });
   });
 };
@@ -102,6 +119,10 @@ const handleItemCheckClicked = function () {
       .then(() => {
         store.findAndUpdate(id, updateData);
         render();
+      })
+      .catch(error=>{
+        store.setError(error);
+        renderError();
       });
   });
 };
@@ -113,12 +134,39 @@ const handleToggleFilterClick = function () {
   });
 };
 
+
+const generateError = function (message) {
+  return `
+      <section class="error-content">
+        <button id="cancel-error">X</button>
+        <p>${message}</p>
+      </section>
+    `;
+};
+
+const renderError = function () {
+  if (store.error) {
+    const el = generateError(store.error);
+    $('.error-container').html(el);
+  } else {
+    $('.error-container').empty();
+  }
+};
+
+const handleCloseError = function () {
+  $('.error-container').on('click', '#cancel-error', () => {
+    store.setError(null);
+    renderError();
+  });
+};
+
 const bindEventListeners = function () {
   handleNewItemSubmit();
   handleItemCheckClicked();
   handleDeleteItemClicked();
   handleEditShoppingItemSubmit();
   handleToggleFilterClick();
+  handleCloseError();
 };
 // This object contains the only exposed methods from this module:
 export default {
